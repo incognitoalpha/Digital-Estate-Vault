@@ -120,7 +120,13 @@ function getActionBadgeColor(action: string): string {
   return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300';
 }
 
-function getActionDescription(log: any): string {
+interface AuditLog {
+  action: string;
+  target_table?: string;
+  metadata?: Record<string, unknown>;
+}
+
+function getActionDescription(log: AuditLog): string {
   const table = log.target_table || 'resource';
   const action = log.action;
 

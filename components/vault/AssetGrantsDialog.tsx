@@ -46,41 +46,40 @@ export function AssetGrantsDialog({
   const [showPassphrasePrompt, setShowPassphrasePrompt] = useState(false);
 
   useEffect(() => {
-    loadData();
-  }, [assetId]);
+    async function fetchData() {
+      const supabase = createClient();
 
-  async function loadData() {
-    const supabase = createClient();
+      const [trusteesResult, grantsResult] = await Promise.all([
+        supabase
+          .from('trustees')
+          .select('*')
+          .eq('invite_status', 'accepted')
+          .order('name'),
+        supabase
+          .from('asset_trustee_grants')
+          .select('*')
+          .eq('asset_id', assetId),
+      ]);
 
-    const [trusteesResult, grantsResult] = await Promise.all([
-      supabase
-        .from('trustees')
-        .select('*')
-        .eq('invite_status', 'accepted')
-        .order('name'),
-      supabase
-        .from('asset_trustee_grants')
-        .select('*')
-        .eq('asset_id', assetId),
-    ]);
-
-    if (trusteesResult.data) {
-      setTrustees(trusteesResult.data);
-    }
-
-    if (grantsResult.data) {
-      setGrants(grantsResult.data);
-      const trusteeIds = new Set(grantsResult.data.map((g) => g.trustee_id));
-      setSelectedTrustees(trusteeIds);
-
-      if (grantsResult.data.length > 0) {
-        setReleaseMode(grantsResult.data[0].release_mode);
-        setQuorumRequired(grantsResult.data[0].quorum_required);
+      if (trusteesResult.data) {
+        setTrustees(trusteesResult.data);
       }
-    }
 
-    setLoading(false);
-  }
+      if (grantsResult.data) {
+        setGrants(grantsResult.data);
+        const trusteeIds = new Set(grantsResult.data.map((g) => g.trustee_id));
+        setSelectedTrustees(trusteeIds);
+
+        if (grantsResult.data.length > 0) {
+          setReleaseMode(grantsResult.data[0].release_mode);
+          setQuorumRequired(grantsResult.data[0].quorum_required);
+        }
+      }
+
+      setLoading(false);
+    }
+    void fetchData();
+  }, [assetId]);
 
   async function handleSave() {
     // Check if we need passphrase for new grants
@@ -258,7 +257,7 @@ export function AssetGrantsDialog({
         {trustees.length === 0 ? (
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
             <p className="text-sm text-amber-800 dark:text-amber-300">
-              You haven't invited any trustees yet. Visit the Trustees page to
+              You haven&apos;t invited any trustees yet. Visit the Trustees page to
               invite someone first.
             </p>
           </div>
@@ -323,7 +322,7 @@ export function AssetGrantsDialog({
                           On Trigger (Recommended)
                         </p>
                         <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Release when the dead man's switch activates after
+                          Release when the dead man&apos;s switch activates after
                           missed check-ins
                         </p>
                       </div>

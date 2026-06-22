@@ -112,9 +112,9 @@ export function SettingsForm({
       {currentStatus !== 'active' && (
         <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
           <p className="text-sm text-amber-800 dark:text-amber-200">
-            <strong>Note:</strong> Your dead man's switch is currently in{' '}
+            <strong>Note:</strong> Your dead man&apos;s switch is currently in{' '}
             <strong>{currentStatus.replace('_', ' ')}</strong> status. Changing
-            your check-in interval won't reset the current state. Check in to
+            your check-in interval won&apos;t reset the current state. Check in to
             reset your status first.
           </p>
         </div>
@@ -175,7 +175,7 @@ export function SettingsForm({
           className="w-full px-4 py-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent dark:bg-slate-700 dark:text-white"
         />
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          How often you need to check in to confirm you're still active
+          How often you need to check in to confirm you&apos;re still active
         </p>
       </div>
 
@@ -206,11 +206,11 @@ export function SettingsForm({
         </h3>
         <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-1">
           <li>
-            • If you miss a check-in, you'll receive a warning email after{' '}
+            • If you miss a check-in, you&apos;ll receive a warning email after{' '}
             <strong>{checkinInterval} days</strong>
           </li>
           <li>
-            • You'll have a <strong>{gracePeriod}-day grace period</strong> to
+            • You&apos;ll have a <strong>{gracePeriod}-day grace period</strong> to
             respond
           </li>
           <li>

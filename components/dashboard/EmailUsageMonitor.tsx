@@ -17,37 +17,36 @@ export function EmailUsageMonitor() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadQuota();
-  }, []);
+    async function fetchQuota() {
+      try {
+        const supabase = createClient();
 
-  async function loadQuota() {
-    try {
-      const supabase = createClient();
+        const [dailyResult, monthlyResult] = await Promise.all([
+          supabase.rpc('check_daily_email_quota'),
+          supabase.rpc('check_monthly_email_quota'),
+        ]);
 
-      const [dailyResult, monthlyResult] = await Promise.all([
-        supabase.rpc('check_daily_email_quota'),
-        supabase.rpc('check_monthly_email_quota'),
-      ]);
+        if (dailyResult.data && monthlyResult.data) {
+          const daily = dailyResult.data[0];
+          const monthly = monthlyResult.data[0];
 
-      if (dailyResult.data && monthlyResult.data) {
-        const daily = dailyResult.data[0];
-        const monthly = monthlyResult.data[0];
-
-        setQuota({
-          emails_sent_today: daily.emails_sent_today,
-          daily_limit_reached: daily.limit_reached,
-          daily_warning: daily.warning,
-          emails_sent_this_month: monthly.emails_sent_this_month,
-          monthly_limit_reached: monthly.limit_reached,
-          monthly_warning: monthly.warning,
-        });
+          setQuota({
+            emails_sent_today: daily.emails_sent_today,
+            daily_limit_reached: daily.limit_reached,
+            daily_warning: daily.warning,
+            emails_sent_this_month: monthly.emails_sent_this_month,
+            monthly_limit_reached: monthly.limit_reached,
+            monthly_warning: monthly.warning,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load email quota:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to load email quota:', error);
-    } finally {
-      setLoading(false);
     }
-  }
+    void fetchQuota();
+  }, []);
 
   if (loading) {
     return null; // Silent loading - this is a non-critical monitoring widget
@@ -146,7 +145,7 @@ export function EmailUsageMonitor() {
             !quota.daily_limit_reached &&
             !quota.monthly_limit_reached && (
               <p className="text-sm text-amber-800 dark:text-amber-200 mt-3">
-                You're approaching Resend's free tier limits. Consider
+                You&apos;re approaching Resend&apos;s free tier limits. Consider
                 monitoring your usage or upgrading if needed.
               </p>
             )}

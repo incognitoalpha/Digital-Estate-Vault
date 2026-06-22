@@ -6,21 +6,6 @@ const corsHeaders = {
     'authorization, x-client-info, apikey, content-type',
 };
 
-interface Owner {
-  id: string;
-  checkin_interval_days: number;
-  grace_period_days: number;
-}
-
-interface DMSState {
-  owner_id: string;
-  status: string;
-  last_checkin_at: string;
-  state_changed_at: string;
-  warning_sent_at: string | null;
-  grace_period_started_at: string | null;
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -59,21 +44,20 @@ Deno.serve(async (req) => {
     const transitions: string[] = [];
 
     for (const state of states || []) {
-      const profile = (state as any).profiles;
+      const profile = (state as { profiles: { checkin_interval_days: number; grace_period_days: number } }).profiles;
       const lastCheckin = new Date(state.last_checkin_at);
       const hoursSinceCheckin =
         (now.getTime() - lastCheckin.getTime()) / (1000 * 60 * 60);
       const daysSinceCheckin = hoursSinceCheckin / 24;
 
-      const checkinIntervalHours = profile.checkin_interval_days * 24;
-      const gracePeriodHours = profile.grace_period_days * 24;
+      const checkinIntervalDays = profile.checkin_interval_days;
 
       let newStatus = state.status;
-      const updates: any = {};
+      const updates: Record<string, unknown> = {};
 
       // State machine logic
       if (state.status === 'active') {
-        if (daysSinceCheckin > profile.checkin_interval_days) {
+        if (daysSinceCheckin > checkinIntervalDays) {
           // Move to warning_sent
           newStatus = 'warning_sent';
           updates.status = newStatus;

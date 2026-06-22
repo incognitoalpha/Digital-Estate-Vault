@@ -23,7 +23,6 @@ export function TrusteeAcceptanceFlow({
   trusteeName,
   ownerName,
   isAuthenticated,
-  authenticatedEmail,
 }: TrusteeAcceptanceFlowProps) {
   const router = useRouter();
   const [step, setStep] = useState<'intro' | 'auth' | 'keypair' | 'complete'>(

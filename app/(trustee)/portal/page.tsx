@@ -87,7 +87,13 @@ export default async function TrusteePortalPage() {
 
   // Transform data - Supabase returns assets as array, flatten to single object
   const grants =
-    grantsData?.map((g: any) => ({
+    grantsData?.map((g: {
+      id: string;
+      release_mode: string;
+      quorum_required: number;
+      wrapped_key: string | null;
+      assets: Record<string, unknown> | Record<string, unknown>[];
+    }) => ({
       id: g.id,
       release_mode: g.release_mode,
       quorum_required: g.quorum_required,

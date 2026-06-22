@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import {
   checkRateLimit,
-  getClientIdentifier,
   RATE_LIMITS,
 } from '@/lib/rate-limit';
 

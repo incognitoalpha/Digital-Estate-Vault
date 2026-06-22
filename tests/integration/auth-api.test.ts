@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 describe('Auth API Integration Tests', () => {
   const baseUrl = 'http://localhost:3000';
