@@ -1,12 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useVault } from './VaultContext';
 
+interface Asset {
+  id: string;
+  title: string;
+  category: string;
+  ciphertext: string;
+  iv: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface AssetFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (newAsset: Asset) => void;
   onCancel?: () => void;
 }
 
@@ -19,7 +28,6 @@ const CATEGORIES = [
 ] as const;
 
 export function AssetForm({ onSuccess, onCancel }: AssetFormProps) {
-  const router = useRouter();
   const { encryptAsset, isUnlocked } = useVault();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<string>('account');
@@ -49,7 +57,7 @@ export function AssetForm({ onSuccess, onCancel }: AssetFormProps) {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push('/login');
+        window.location.href = '/login';
         return;
       }
 
@@ -57,37 +65,34 @@ export function AssetForm({ onSuccess, onCancel }: AssetFormProps) {
       const { ciphertext, iv } = await encryptAsset(content);
 
       // Save to database
-      const { error: insertError } = await supabase.from('assets').insert({
-        owner_id: user.id,
-        category,
-        title,
-        ciphertext,
-        iv,
-      });
+      const { data: newAsset, error: insertError } = await supabase
+        .from('assets')
+        .insert({
+          owner_id: user.id,
+          category,
+          title,
+          ciphertext,
+          iv,
+        })
+        .select()
+        .single();
 
       if (insertError) {
-        setError('Failed to save asset');
-        console.error(insertError);
+        console.error('Supabase insert error:', insertError);
+        setError(`Failed to save asset: ${insertError.message} (code: ${insertError.code})`);
         return;
       }
-
-      // Log audit entry
-      await supabase.from('audit_log').insert({
-        actor_id: user.id,
-        actor_role: 'owner',
-        action: 'asset_created',
-        target_table: 'assets',
-      });
 
       // Reset form
       setTitle('');
       setCategory('account');
       setContent('');
 
-      onSuccess?.();
+      onSuccess?.(newAsset);
     } catch (err) {
       console.error('Asset creation error:', err);
-      setError('An unexpected error occurred');
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`Unexpected error: ${msg}`);
     } finally {
       setLoading(false);
     }

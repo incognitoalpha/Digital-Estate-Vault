@@ -34,35 +34,17 @@ function VaultContent({ assets: initialAssets, salt }: VaultPageClientProps) {
     assetTitle: string;
   } | null>(null);
 
-  const handleAssetAdded = () => {
+  const handleAssetAdded = (newAsset: Asset) => {
     setShowAddForm(false);
-    router.refresh();
+    setAssets((prev) => [newAsset, ...prev]);
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this asset?')) {
-      return;
-    }
-
     const supabase = createClient();
     const { error } = await supabase.from('assets').delete().eq('id', id);
 
     if (!error) {
       setAssets(assets.filter((a) => a.id !== id));
-
-      // Log audit entry
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from('audit_log').insert({
-          actor_id: user.id,
-          actor_role: 'owner',
-          action: 'asset_deleted',
-          target_table: 'assets',
-          target_id: id,
-        });
-      }
     }
   };
 
@@ -75,7 +57,7 @@ function VaultContent({ assets: initialAssets, salt }: VaultPageClientProps) {
   };
 
   if (!isUnlocked) {
-    return <VaultUnlock salt={salt} onUnlock={() => router.refresh()} />;
+    return <VaultUnlock salt={salt} onUnlock={() => { /* state already updated in VaultContext */ }} />;
   }
 
   return (

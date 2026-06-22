@@ -41,6 +41,7 @@ export function AssetList({ assets, salt, onDelete, onManageAccess }: AssetListP
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [decryptedContent, setDecryptedContent] = useState<Record<string, string>>({});
   const [decrypting, setDecrypting] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const handleToggleExpand = async (asset: Asset) => {
     if (expandedId === asset.id) {
@@ -153,7 +154,7 @@ export function AssetList({ assets, salt, onDelete, onManageAccess }: AssetListP
                             {decryptedContent[asset.id]}
                           </pre>
                         </div>
-                        <div className="mt-3 flex gap-3">
+                        <div className="mt-3 flex flex-wrap gap-3 items-center">
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(
@@ -173,12 +174,33 @@ export function AssetList({ assets, salt, onDelete, onManageAccess }: AssetListP
                             </button>
                           )}
                           {onDelete && (
-                            <button
-                              onClick={() => onDelete(asset.id)}
-                              className="text-sm text-red-600 dark:text-red-400 hover:underline"
-                            >
-                              Delete
-                            </button>
+                            confirmDeleteId === asset.id ? (
+                              <span className="flex items-center gap-2">
+                                <span className="text-sm text-slate-600 dark:text-slate-400">Delete this asset?</span>
+                                <button
+                                  onClick={() => {
+                                    setConfirmDeleteId(null);
+                                    onDelete(asset.id);
+                                  }}
+                                  className="text-sm font-medium text-red-600 dark:text-red-400 hover:underline"
+                                >
+                                  Yes, delete
+                                </button>
+                                <button
+                                  onClick={() => setConfirmDeleteId(null)}
+                                  className="text-sm text-slate-500 dark:text-slate-400 hover:underline"
+                                >
+                                  Cancel
+                                </button>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => setConfirmDeleteId(asset.id)}
+                                className="text-sm text-red-600 dark:text-red-400 hover:underline"
+                              >
+                                Delete
+                              </button>
+                            )
                           )}
                         </div>
                       </div>
