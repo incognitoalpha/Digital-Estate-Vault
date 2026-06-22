@@ -15,6 +15,7 @@ interface Trustee {
 interface TrusteeListProps {
   trustees: Trustee[];
   onRevoke?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -29,8 +30,9 @@ const STATUS_LABELS: Record<string, string> = {
   revoked: 'Revoked',
 };
 
-export function TrusteeList({ trustees, onRevoke }: TrusteeListProps) {
+export function TrusteeList({ trustees, onRevoke, onDelete }: TrusteeListProps) {
   const [revoking, setRevoking] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   const handleRevoke = async (trustee: Trustee) => {
     if (
@@ -78,6 +80,55 @@ export function TrusteeList({ trustees, onRevoke }: TrusteeListProps) {
       alert('An unexpected error occurred');
     } finally {
       setRevoking(null);
+    }
+  };
+
+  const handleDelete = async (trustee: Trustee) => {
+    if (
+      !confirm(
+        `Are you sure you want to permanently delete ${trustee.name || trustee.email}? This will remove all their access grants.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(trustee.id);
+
+    try {
+      const supabase = createClient();
+
+      // Delete trustee row
+      const { error: deleteError } = await supabase
+        .from('trustees')
+        .delete()
+        .eq('id', trustee.id);
+
+      if (deleteError) {
+        console.error('Failed to delete trustee:', deleteError);
+        alert('Failed to delete trustee');
+        return;
+      }
+
+      // Log audit entry
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('audit_log').insert({
+          actor_id: user.id,
+          actor_role: 'owner',
+          action: 'trustee_revoked', // Log as revoked/deleted audit action
+          target_table: 'trustees',
+          target_id: trustee.id,
+        });
+      }
+
+      onDelete?.(trustee.id);
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('An unexpected error occurred');
+    } finally {
+      setDeleting(null);
     }
   };
 
@@ -133,15 +184,26 @@ export function TrusteeList({ trustees, onRevoke }: TrusteeListProps) {
               )}
             </div>
 
-            {trustee.invite_status !== 'revoked' && (
-              <button
-                onClick={() => handleRevoke(trustee)}
-                disabled={revoking === trustee.id}
-                className="text-sm text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {revoking === trustee.id ? 'Revoking...' : 'Revoke Access'}
-              </button>
-            )}
+            <div className="flex flex-col items-end gap-2">
+              {trustee.invite_status !== 'revoked' && (
+                <button
+                  onClick={() => handleRevoke(trustee)}
+                  disabled={revoking === trustee.id || deleting === trustee.id}
+                  className="text-sm text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {revoking === trustee.id ? 'Revoking...' : 'Revoke Access'}
+                </button>
+              )}
+              {(trustee.invite_status === 'revoked' || trustee.invite_status === 'pending') && (
+                <button
+                  onClick={() => handleDelete(trustee)}
+                  disabled={deleting === trustee.id || revoking === trustee.id}
+                  className="text-sm text-slate-500 dark:text-slate-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deleting === trustee.id ? 'Deleting...' : 'Delete'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       ))}

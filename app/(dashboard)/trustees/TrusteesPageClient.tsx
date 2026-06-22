@@ -46,6 +46,10 @@ export function TrusteesPageClient({
     );
   };
 
+  const handleDelete = (id: string) => {
+    setTrustees(trustees.filter((t) => t.id !== id));
+  };
+
   const acceptedTrustees = trustees.filter(
     (t) => t.invite_status === 'accepted'
   );
@@ -85,7 +89,7 @@ export function TrusteesPageClient({
         <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
           Your Trustees
         </h2>
-        <TrusteeList trustees={trustees} onRevoke={handleRevoke} />
+        <TrusteeList trustees={trustees} onRevoke={handleRevoke} onDelete={handleDelete} />
       </div>
 
       {acceptedTrustees.length > 0 && assets.length > 0 && (
