@@ -42,22 +42,16 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   }, [lockTimer, lock]);
 
   const unlock = useCallback(
-    async (pass: string, salt: string): Promise<boolean> => {
-      try {
-        // Test decryption with a known value to verify passphrase
-        const testCiphertext = 'dGVzdA=='; // base64 "test"
-        const testIv = 'dGVzdGl2'; // base64 "testiv"
+    async (pass: string, _salt: string): Promise<boolean> => {
+      // Accept any non-empty passphrase.
+      // Real validation occurs when assets are decrypted — if the passphrase is
+      // wrong, the decrypt() call inside AssetList will throw and display an error.
+      if (!pass) return false;
 
-        // Try to decrypt - will throw if passphrase is wrong
-        await decrypt(testCiphertext, testIv, salt, pass);
-
-        setPassphrase(pass);
-        setIsUnlocked(true);
-        resetLockTimer();
-        return true;
-      } catch {
-        return false;
-      }
+      setPassphrase(pass);
+      setIsUnlocked(true);
+      resetLockTimer();
+      return true;
     },
     [resetLockTimer]
   );

@@ -88,12 +88,22 @@ export function TrusteeForm({ onSuccess, onCancel }: TrusteeFormProps) {
         });
 
         if (!inviteResponse.ok) {
-          console.error('Failed to send invitation email');
-          // Don't block the user flow - the trustee was created successfully
+          const errData = await inviteResponse.json().catch(() => ({}));
+          console.error('Failed to send invitation email:', errData);
+          setError(
+            `Trustee added, but the invitation email could not be sent. ` +
+              `Please check your email configuration. ` +
+              (errData?.details?.message ? `Resend error: ${errData.details.message}` : '')
+          );
+          // Don't block success — the trustee row was created
+          onSuccess?.();
+          return;
         }
       } catch (emailError) {
         console.error('Email send error:', emailError);
-        // Continue - trustee invitation was created successfully
+        setError('Trustee added, but the invitation email could not be delivered. Please retry later.');
+        onSuccess?.();
+        return;
       }
 
       // Reset form

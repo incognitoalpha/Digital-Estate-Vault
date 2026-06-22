@@ -100,25 +100,37 @@ export async function POST(request: NextRequest) {
       acceptUrl
     );
 
+    const emailPayload = {
+      from: fromEmail,
+      to: [trustee.email],
+      subject: emailTemplate.subject,
+      html: emailTemplate.html,
+    };
+
+    console.log('Sending invite email to:', trustee.email, 'from:', fromEmail);
+
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${resendKey}`,
       },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: trustee.email,
-        subject: emailTemplate.subject,
-        html: emailTemplate.html,
-      }),
+      body: JSON.stringify(emailPayload),
     });
 
     if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      console.error('Resend API error:', errorText);
+      let errorBody: unknown = {};
+      try {
+        errorBody = await emailResponse.json();
+      } catch {
+        errorBody = await emailResponse.text();
+      }
+      console.error('Resend API error:', JSON.stringify(errorBody));
       return NextResponse.json(
-        { error: 'Failed to send invitation email' },
+        {
+          error: 'Failed to send invitation email',
+          details: errorBody,
+        },
         { status: 500 }
       );
     }
