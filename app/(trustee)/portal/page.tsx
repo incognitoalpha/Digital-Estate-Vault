@@ -85,15 +85,19 @@ export default async function TrusteePortalPage() {
     )
     .eq('trustee_id', trusteeRecord.id);
 
+  interface GrantRow {
+    id: string;
+    release_mode: string;
+    quorum_required: number;
+    wrapped_key: string | null;
+    assets:
+      | { id: string; title: string; category: string; ciphertext: string; iv: string; created_at: string }
+      | { id: string; title: string; category: string; ciphertext: string; iv: string; created_at: string }[];
+  }
+
   // Transform data - Supabase returns assets as array, flatten to single object
   const grants =
-    grantsData?.map((g: {
-      id: string;
-      release_mode: string;
-      quorum_required: number;
-      wrapped_key: string | null;
-      assets: Record<string, unknown> | Record<string, unknown>[];
-    }) => ({
+    grantsData?.map((g: GrantRow) => ({
       id: g.id,
       release_mode: g.release_mode,
       quorum_required: g.quorum_required,
