@@ -16,31 +16,32 @@ The following diagram illustrates the secure data flow and execution components 
 
 ```mermaid
 flowchart LR
-    subgraph Client
-        Owner[Owner (Browser)]
-        Trustee[Trustee (Browser)]
-        Crypto[Web Crypto API (AES-GCM/RSA)]
+    subgraph Client["Client-Side"]
+        Owner["Owner (Browser)"]
+        Trustee["Trustee (Browser)"]
+        Crypto["Web Crypto API (AES-GCM/RSA)"]
     end
 
-    subgraph Hosting
-        NextApp[Next.js App Router (TypeScript)]
+    subgraph Hosting["Frontend Hosting - Vercel"]
+        NextApp["Next.js App Router (TypeScript)"]
     end
 
-    subgraph Database
-        Postgres[PostgreSQL + RLS]
-        Auth[Supabase Auth]
-        Edge[Edge Functions]
-        Cron[pg_cron Scheduler]
+    subgraph Database["Backend / Database - Supabase"]
+        Postgres[(PostgreSQL + RLS)]
+        Auth["Supabase Auth"]
+        Edge["Edge Functions"]
+        Cron["pg_cron Scheduler"]
     end
 
-    subgraph External
-        Email[Resend (Email Delivery)]
-        GitHub[GitHub Actions (Keep-Alive)]
+    subgraph External["External Services"]
+        Email["Resend (Email Delivery)"]
+        GitHub["GitHub Actions (Keep-Alive)"]
     end
 
     Owner -- "HTTPS + JWT" --> NextApp
     Owner -- "Encrypt/Decrypt" --> Crypto
-    Crypto -. "Ciphertext only" .-> Postgres
+    Crypto -. "Ciphertext Only" .-> Postgres
+
     NextApp -- "Auth & Queries" --> Auth
     NextApp --> Postgres
 
@@ -49,6 +50,7 @@ flowchart LR
     Cron -- "Triggers every 15 min" --> Edge
     Edge -- "Verifies Dead Man Switch" --> Postgres
     Edge -- "Escalation & Notifications" --> Email
+
     Email --> Owner
     Email --> Trustee
 
