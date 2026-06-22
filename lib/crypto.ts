@@ -45,16 +45,19 @@ async function deriveKey(
  */
 export async function encrypt(
   plaintext: string,
-  passphrase: string
+  passphrase: string,
+  existingSalt?: string
 ): Promise<{
   ciphertext: string;
   iv: string;
   salt: string;
 }> {
   const encoder = new TextEncoder();
-  const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+  const saltBytes = existingSalt
+    ? base64ToBuffer(existingSalt)
+    : crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
   const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
-  const key = await deriveKey(passphrase, salt);
+  const key = await deriveKey(passphrase, saltBytes);
 
   const ciphertextBuffer = await crypto.subtle.encrypt(
     { name: ALGORITHM, iv },
@@ -65,7 +68,7 @@ export async function encrypt(
   return {
     ciphertext: bufferToBase64(ciphertextBuffer),
     iv: bufferToBase64(iv),
-    salt: bufferToBase64(salt),
+    salt: bufferToBase64(saltBytes),
   };
 }
 
