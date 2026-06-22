@@ -1,0 +1,25 @@
+name: Keep-Alive
+
+# Runs every 3 days to prevent Supabase free project auto-pause
+# Critical: This must NOT touch checkin tables or dead_man_switch_state
+on:
+  schedule:
+    # Every 3 days at 2:00 AM UTC
+    - cron: '0 2 */3 * *'
+  workflow_dispatch: # Allow manual trigger for testing
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Supabase to prevent auto-pause
+        run: |
+          curl -X POST "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}/rest/v1/rpc/keepalive_ping" \
+            -H "apikey: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"secret": "${{ secrets.KEEPALIVE_SECRET }}"}'
+
+      - name: Log keep-alive execution
+        run: echo "Keep-alive ping executed successfully at $(date)"
